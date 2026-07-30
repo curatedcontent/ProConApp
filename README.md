@@ -54,7 +54,28 @@ The app includes proper iOS permissions in `ios/Runner/Info.plist`:
 ### Platform Notes
 - **iOS**: Uses native speech recognition (requires internet for best results)
 - **Android**: Uses Android speech recognition services
-- **Storage**: Local SQLite database (no cloud sync)
+- **Web**: Uses the browser's Web Speech API (Chrome/Edge recommended); requires HTTPS or localhost
+- **Storage**: Local database (Sembast) - SQLite-backed on iOS/Android/desktop, IndexedDB on web (no cloud sync)
+
+## Running on the Web 🌐
+
+```bash
+flutter run -d chrome
+```
+
+To produce a production build (used by the GitHub Pages deploy workflow):
+```bash
+flutter build web --release --base-href /ProConApp/ --no-web-resources-cdn
+```
+`--no-web-resources-cdn` bundles the CanvasKit renderer locally instead of fetching it
+from Google's CDN, keeping the app self-contained.
+
+### Deployment
+Pushing to `main` runs `.github/workflows/deploy-web.yml`, which builds the web app and
+publishes it via GitHub Pages. The base href (`/ProConApp/`) matches this repository's
+name, so it works both at the default project-pages URL
+(`https://curatedcontent.github.io/ProConApp/`) and at the same subpath under a custom
+domain inherited from the account's user/org Pages site (`https://catalogentry.com/ProConApp/`).
 
 ## Usage Guide 📱
 
