@@ -3,7 +3,6 @@ import '../services/db_service.dart';
 import '../services/export_import_service.dart';
 import '../models/entry.dart';
 import 'entry_detail_screen.dart';
-import 'dart:io';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
@@ -450,13 +449,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Future<void> _exportData() async {
     try {
-      final filePath = await _exportImport.exportToICloud();
+      await _exportImport.exportToICloud();
       final entries = await _db.queryAll();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                '✓ Exported ${entries.length} entries to local storage\n\nBackup saved on device'),
+            content: Text(_exportImport.supportsFilePicker
+                ? '✓ Downloaded backup of ${entries.length} entries'
+                : '✓ Exported ${entries.length} entries to local storage\n\nBackup saved on device'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
           ),
@@ -477,7 +477,24 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Future<void> _importData() async {
     try {
-      // Get list of available backups
+      if (_exportImport.supportsFilePicker) {
+        // Web: pick a backup file directly from the browser file picker.
+        final importedCount = await _exportImport.importFromPicker();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '✓ Imported $importedCount entries from backup\n\nList updated'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          _loadEntries();
+        }
+        return;
+      }
+
+      // Native: get list of available backups
       final backups = await _exportImport.getBackupFiles();
 
       if (backups.isEmpty) {
@@ -505,17 +522,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
               shrinkWrap: true,
               itemCount: backups.length,
               itemBuilder: (context, index) {
-                final backup = backups[index] as File;
-                final fileName = backup.path.split('/').last;
-                final fileStat = backup.statSync();
-                final fileDate = _formatDate(fileStat.modified);
+                final backup = backups[index];
+                final fileDate = _formatDate(backup.modified);
                 return ListTile(
                   leading: const Icon(Icons.file_present),
-                  title: Text(fileName
+                  title: Text(backup.name
                       .replaceAll('ProCon_Backup_', '')
                       .replaceAll('.json', '')),
                   subtitle: Text('Saved $fileDate • Local Storage'),
-                  onTap: () => Navigator.pop(context, backup.path),
+                  onTap: () => Navigator.pop(context, backup.id),
                 );
               },
             ),
