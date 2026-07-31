@@ -28,10 +28,10 @@ jobs:
 
       - run: flutter test
 
-      # base-href matches this repo's name so the app works both at the
-      # default project-pages URL (curatedcontent.github.io/ProConApp/) and
-      # at the same subpath under an inherited custom domain
-      # (catalogentry.com/ProConApp/).
+      # base-href matches this repo's name so the app works both at this
+      # repo's own project-pages URL (curatedcontent.github.io/ProConApp/)
+      # and at the same subpath in the catalogentry-hub site
+      # (www.catalogentry.com/ProConApp/).
       - run: flutter build web --release --base-href /ProConApp/ --no-web-resources-cdn
 
       - uses: actions/configure-pages@v5
@@ -39,6 +39,20 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
+
+      # Also publish into curatedcontent/catalogentry-hub's gh-pages branch
+      # under /ProConApp/, so www.catalogentry.com/ProConApp/ stays in sync.
+      # keep_files preserves the hub's own content and other projects.
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.HUB_DEPLOY_TOKEN }}
+          external_repository: curatedcontent/catalogentry-hub
+          publish_branch: gh-pages
+          publish_dir: build/web
+          destination_dir: ProConApp
+          keep_files: true
+          user_name: Claude
+          user_email: noreply@anthropic.com
 
   deploy:
     needs: build
