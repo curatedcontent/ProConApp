@@ -51,8 +51,8 @@ jobs:
           publish_dir: build/web
           destination_dir: ProConApp
           keep_files: true
-          user_name: Claude
-          user_email: noreply@anthropic.com
+          user_name: vintage
+          user_email: email@catalogentry.com
 
   deploy:
     needs: build
