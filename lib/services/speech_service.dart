@@ -5,30 +5,57 @@ class SpeechService {
   late stt.SpeechToText _speech;
   bool _available = false;
   bool _listening = false;
+  String? _lastError;
   Function(String)? _onResult;
   Function(String)? _onPartialResult;
   Function(QueryIntent)? _onVoiceTrigger;
 
+  /// Fired for errors that happen mid-session (e.g. the browser denies
+  /// microphone access after listening has already started).
+  Function(String)? onError;
+
   bool get isListening => _listening;
   bool get isAvailable => _available;
+  String? get lastError => _lastError;
 
   Future<void> init() async {
     _speech = stt.SpeechToText();
-    _available = await _speech.initialize(
-      onError: (error) {
-        print('Speech error: $error');
-        // Don't treat temporary errors as failures
-        if (error.permanent) {
-          _listening = false;
-        }
-      },
-      onStatus: (status) {
-        _listening = status == 'listening';
-        print('Speech status: $status');
-      },
-      debugLogging: true,
-    );
-    print('Speech available: $_available');
+    try {
+      _available = await _speech.initialize(
+        onError: (error) {
+          final message = _describeError(error.errorMsg);
+          _lastError = message;
+          if (error.permanent) {
+            _listening = false;
+          }
+          onError?.call(message);
+        },
+        onStatus: (status) {
+          _listening = status == 'listening';
+        },
+      );
+    } catch (e) {
+      _available = false;
+    }
+    if (!_available) {
+      _lastError ??=
+          "Voice input isn't supported in this browser. Try Chrome or Edge.";
+    }
+  }
+
+  String _describeError(String errorMsg) {
+    switch (errorMsg) {
+      case 'error_no_permission':
+      case 'error_permission_denied':
+      case 'not-allowed':
+        return 'Microphone access was denied. Please allow microphone access for this site (check your browser\'s address-bar/site settings) and try again.';
+      case 'error_no_match':
+        return "Didn't catch that - please try again.";
+      case 'error_network':
+        return 'Voice recognition needs an internet connection.';
+      default:
+        return 'Voice input error: $errorMsg';
+    }
   }
 
   Future<bool> startListening({
@@ -36,8 +63,8 @@ class SpeechService {
     Function(String)? onPartialResult,
     Function(QueryIntent)? onVoiceTrigger,
   }) async {
+    _lastError = null;
     if (!_available) {
-      print('Speech not available, trying to reinitialize...');
       await init();
       if (!_available) return false;
     }
@@ -54,7 +81,6 @@ class SpeechService {
       await _speech.listen(
         onResult: (result) {
           final text = result.recognizedWords;
-          print('Speech recognized: "$text" (final: ${result.finalResult})');
           if (result.finalResult) {
             _onResult?.call(text);
             // Check for voice triggers
@@ -72,14 +98,11 @@ class SpeechService {
         localeId: 'en_US',
         listenMode: stt.ListenMode.dictation, // Better for continuous speech
         cancelOnError: false, // Don't cancel on temporary errors
-        onSoundLevelChange: (level) {
-          // Can use this for visual feedback
-        },
       );
       _listening = true;
       return true;
     } catch (e) {
-      print('Error starting speech recognition: $e');
+      _lastError = 'Could not start listening: $e';
       return false;
     }
   }
