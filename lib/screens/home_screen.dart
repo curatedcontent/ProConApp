@@ -32,6 +32,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _speech.onError = (message) {
+      if (!mounted) return;
+      setState(() => _listening = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    };
     _initializeSpeech();
     _initializeDatabase();
     _transcriptFocusNode.addListener(() {
@@ -90,7 +101,18 @@ class _HomeScreenState extends State<HomeScreen> {
           // Not needed for simple flow
         },
       );
-      if (ok) setState(() => _listening = true);
+      if (ok) {
+        setState(() => _listening = true);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_speech.lastError ??
+                'Could not start voice input. Please check microphone permissions.'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } else {
       await _speech.stopListening();
       setState(() {
