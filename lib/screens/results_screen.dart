@@ -3,6 +3,7 @@ import '../services/db_service.dart';
 import '../services/export_import_service.dart';
 import '../models/entry.dart';
 import 'entry_detail_screen.dart';
+import '../widgets/account_button.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
@@ -136,6 +137,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ),
             ],
           ),
+          const AccountButton(),
         ],
       ),
       body: _loading

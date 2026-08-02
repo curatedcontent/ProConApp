@@ -1,17 +1,33 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'firebase_options.dart';
 import 'screens/main_screen.dart';
+import 'services/auth_service.dart';
 import 'services/db_service.dart';
-import 'services/speech_service.dart';
+import 'services/unload_guard.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Lock orientation to portrait mode only
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  // Services will be initialized on first use to speed up launch
+
+  // Cloud sync (Firebase Auth + Firestore) is currently only configured for
+  // web; native builds keep working local-only, unchanged.
+  if (kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
+
+  await DbService().init();
+
+  registerUnloadGuard(
+    () => !AuthService().isSignedIn && DbService().hasLocalEntriesSync,
+  );
+
   runApp(const ProConApp());
 }
 
