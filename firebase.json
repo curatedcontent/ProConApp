@@ -1,0 +1,17 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "vtprocon",
+          "configurations": {
+            "web": "1:640672675236:web:6fc9c8444be6ed8c61fd31"
+          }
+        }
+      }
+    }
+  }
+}

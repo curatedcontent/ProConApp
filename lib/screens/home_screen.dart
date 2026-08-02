@@ -5,6 +5,7 @@ import '../services/query_parser.dart';
 import '../models/entry.dart';
 import 'new_entry_screen.dart';
 import 'package:uuid/uuid.dart';
+import '../widgets/account_button.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onVoiceTrigger;
@@ -331,6 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Voice Notes'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        actions: const [AccountButton()],
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),

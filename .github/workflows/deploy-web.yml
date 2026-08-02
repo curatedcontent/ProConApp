@@ -32,7 +32,14 @@ jobs:
       # repo's own project-pages URL (curatedcontent.github.io/ProConApp/)
       # and at the same subpath in the catalogentry-hub site
       # (www.catalogentry.com/ProConApp/).
-      - run: flutter build web --release --base-href /ProConApp/ --no-web-resources-cdn
+      #
+      # NOTE: do NOT add --no-web-resources-cdn here. It causes a blank
+      # white screen at runtime (confirmed via headless browser testing)
+      # once Firebase (firebase_core/auth/firestore) is in the app - some
+      # interaction between locally-bundled CanvasKit and Firebase's
+      # Trusted Types policies breaks initialization. CanvasKit is loaded
+      # from Google's CDN instead as a result.
+      - run: flutter build web --release --base-href /ProConApp/
 
       - uses: actions/configure-pages@v5
 
